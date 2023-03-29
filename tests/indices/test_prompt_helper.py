@@ -1,7 +1,9 @@
 """Test PromptHelper."""
-from typing import List
+from typing import List, cast
 
-from gpt_index.data_structs.data_structs import Node
+from langchain import PromptTemplate as LangchainPrompt
+
+from gpt_index.data_structs.node_v2 import Node
 from gpt_index.indices.prompt_helper import PromptHelper
 from gpt_index.prompts.base import Prompt
 from tests.mock_utils.mock_utils import mock_tokenizer
@@ -189,4 +191,7 @@ def test_get_biggest_prompt() -> None:
     prompt2 = TestPrompt("This is the longer prompt{text}")
     prompt3 = TestPrompt("This is the {text}")
     biggest_prompt = prompt_helper.get_biggest_prompt([prompt1, prompt2, prompt3])
-    assert biggest_prompt.prompt.template == prompt2.prompt.template
+
+    lc_biggest_template = cast(LangchainPrompt, biggest_prompt.prompt).template
+    prompt2_template = cast(LangchainPrompt, prompt2.prompt).template
+    assert lc_biggest_template == prompt2_template

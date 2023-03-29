@@ -56,6 +56,10 @@ class Node(IndexStruct):
     # extra node info
     node_info: Optional[Dict[str, Any]] = None
 
+    # TODO: store reference instead of actual image
+    # base64 encoded image str
+    image: Optional[str] = None
+
     def get_text(self) -> str:
         """Get text."""
         text = super().get_text()
@@ -371,3 +375,30 @@ class ChromaIndexDict(IndexDict):
     def get_type(cls) -> str:
         """Get type."""
         return IndexStructType.CHROMA
+
+
+class OpensearchIndexDict(IndexDict):
+    """Index dict for Opensearch vector index."""
+
+    @classmethod
+    def get_type(cls) -> str:
+        """Get type."""
+        return IndexStructType.OPENSEARCH
+
+
+class ChatGPTRetrievalPluginIndexDict(IndexDict):
+    """Index dict for ChatGPT Retrieval Plugin."""
+
+    @classmethod
+    def get_type(cls) -> str:
+        """Get type."""
+        return IndexStructType.CHATGPT_RETRIEVAL_PLUGIN
+
+
+class EmptyIndex(IndexStruct):
+    """Empty index."""
+
+    @classmethod
+    def get_type(cls) -> str:
+        """Get type."""
+        return IndexStructType.EMPTY

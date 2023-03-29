@@ -47,7 +47,7 @@ class WeaviateVectorStore(VectorStore):
             import weaviate  # noqa: F401
             from weaviate import Client  # noqa: F401
         except ImportError:
-            raise ValueError(import_err_msg)
+            raise ImportError(import_err_msg)
 
         self._client = cast(Client, weaviate_client)
         # validate class prefix starts with a capital letter
@@ -100,7 +100,11 @@ class WeaviateVectorStore(VectorStore):
         WeaviateNode.delete_document(self._client, doc_id, self._class_prefix)
 
     def query(
-        self, query_embedding: List[float], similarity_top_k: int
+        self,
+        query_embedding: List[float],
+        similarity_top_k: int,
+        doc_ids: Optional[List[str]] = None,
+        query_str: Optional[str] = None,
     ) -> VectorStoreQueryResult:
         """Query index for top k most similar nodes.
 

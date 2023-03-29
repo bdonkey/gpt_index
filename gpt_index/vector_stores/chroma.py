@@ -1,15 +1,17 @@
 """Chroma vector store."""
 import logging
 import math
-from typing import Any, List, cast
+from typing import Any, List, Optional, cast
 
-from gpt_index.data_structs.data_structs import Node
+from gpt_index.data_structs.node_v2 import DocumentRelationship, Node
 from gpt_index.utils import truncate_text
 from gpt_index.vector_stores.types import (
     NodeEmbeddingResult,
     VectorStore,
     VectorStoreQueryResult,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ChromaVectorStore(VectorStore):
@@ -36,7 +38,7 @@ class ChromaVectorStore(VectorStore):
         try:
             import chromadb  # noqa: F401
         except ImportError:
-            raise ValueError(import_err_msg)
+            raise ImportError(import_err_msg)
         from chromadb.api.models.Collection import Collection
 
         self._collection = cast(Collection, chroma_collection)
@@ -62,7 +64,8 @@ class ChromaVectorStore(VectorStore):
         documents = []
         for result in embedding_results:
             embeddings.append(result.embedding)
-            metadatas.append({"document_id": result.doc_id})
+            extra_info = result.node.extra_info or {}
+            metadatas.append({**extra_info, **{"document_id": result.doc_id}})
             ids.append(result.id)
             documents.append(result.node.get_text())
 
@@ -92,6 +95,8 @@ class ChromaVectorStore(VectorStore):
         self,
         query_embedding: List[float],
         similarity_top_k: int,
+        doc_ids: Optional[List[str]] = None,
+        query_str: Optional[str] = None,
     ) -> VectorStoreQueryResult:
         """Query index for top k most similar nodes.
 
@@ -104,31 +109,33 @@ class ChromaVectorStore(VectorStore):
             query_embeddings=query_embedding, n_results=similarity_top_k
         )
 
-        logging.debug(f"> Top {len(results['documents'])} nodes:")
+        logger.debug(f"> Top {len(results['documents'])} nodes:")
         nodes = []
         similarities = []
         ids = []
         for result in zip(
-            results["ids"],
-            results["documents"],
-            results["metadatas"],
-            results["distances"],
+            results["ids"][0],
+            results["documents"][0],
+            results["metadatas"][0],
+            results["distances"][0],
         ):
-            node_id = result[0][0]
+            node_id = result[0]
             node = Node(
                 doc_id=node_id,
-                text=result[1][0],
-                extra_info=result[2][0],
-                ref_doc_id=result[2][0]["document_id"],
+                text=result[1],
+                extra_info=result[2],
+                relationships={
+                    DocumentRelationship.SOURCE: result[2]["document_id"],
+                },
             )
             nodes.append(node)
 
-            similarity_score = 1.0 - math.exp(-result[3][0])
+            similarity_score = 1.0 - math.exp(-result[3])
             similarities.append(similarity_score)
 
-            logging.debug(
-                f"> [Node {result[0][0]}] [Similarity score: {similarity_score}] "
-                f"{truncate_text(str(result[1][0]), 100)}"
+            logger.debug(
+                f"> [Node {result[0]}] [Similarity score: {similarity_score}] "
+                f"{truncate_text(str(result[1]), 100)}"
             )
             ids.append(node_id)
 

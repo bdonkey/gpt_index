@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from gpt_index import PromptHelper
 from gpt_index.indices.list.base import GPTListIndex
+from gpt_index.indices.service_context import ServiceContext
 from gpt_index.langchain_helpers.chain_wrapper import (
     LLMChain,
     LLMMetadata,
@@ -19,7 +20,7 @@ def mock_llmchain_predict(**full_prompt_args: Any) -> str:
 
 
 @patch.object(LLMChain, "predict", side_effect=mock_llmchain_predict)
-@patch("gpt_index.langchain_helpers.chain_wrapper.OpenAI")
+@patch("gpt_index.llm_predictor.base.OpenAI")
 @patch.object(LLMPredictor, "get_llm_metadata", return_value=LLMMetadata())
 @patch.object(LLMChain, "__init__", return_value=None)
 def test_passing_args_to_query(
@@ -37,10 +38,11 @@ def test_passing_args_to_query(
     doc = Document(doc_text)
     llm_predictor = LLMPredictor()
     prompt_helper = PromptHelper.from_llm_predictor(llm_predictor)
-    # index construction should not use llm_predictor at all
-    index = GPTListIndex(
-        [doc], llm_predictor=llm_predictor, prompt_helper=prompt_helper
+    service_context = ServiceContext.from_defaults(
+        llm_predictor=llm_predictor, prompt_helper=prompt_helper
     )
+    # index construction should not use llm_predictor at all
+    index = GPTListIndex.from_documents([doc], service_context=service_context)
     # should use llm_predictor during query time
     response = index.query("What is?")
     assert str(response) == "foo bar 2"

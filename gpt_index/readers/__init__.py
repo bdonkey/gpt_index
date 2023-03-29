@@ -10,8 +10,10 @@ definition of a Document - the bare minimum is a `text` property.
 
 """
 
+from gpt_index.readers.chatgpt_plugin import ChatGPTRetrievalPluginReader
 from gpt_index.readers.chroma import ChromaReader
 from gpt_index.readers.discord_reader import DiscordReader
+from gpt_index.readers.elasticsearch import ElasticsearchReader
 from gpt_index.readers.faiss import FaissReader
 
 # readers
@@ -20,6 +22,7 @@ from gpt_index.readers.github_readers.github_repository_reader import (
     GithubRepositoryReader,
 )
 from gpt_index.readers.google_readers.gdocs import GoogleDocsReader
+from gpt_index.readers.json import JSONReader
 from gpt_index.readers.make_com.wrapper import MakeWrapper
 from gpt_index.readers.mbox import MboxReader
 from gpt_index.readers.mongo import SimpleMongoReader
@@ -29,6 +32,7 @@ from gpt_index.readers.pinecone import PineconeReader
 from gpt_index.readers.qdrant import QdrantReader
 from gpt_index.readers.schema.base import Document
 from gpt_index.readers.slack import SlackReader
+from gpt_index.readers.steamship.file_reader import SteamshipFileReader
 from gpt_index.readers.string_iterable import StringIterableReader
 from gpt_index.readers.twitter import TwitterTweetReader
 from gpt_index.readers.weaviate.reader import WeaviateReader
@@ -45,6 +49,7 @@ __all__ = [
     "WikipediaReader",
     "YoutubeTranscriptReader",
     "SimpleDirectoryReader",
+    "JSONReader",
     "SimpleMongoReader",
     "NotionPageReader",
     "GoogleDocsReader",
@@ -66,4 +71,7 @@ __all__ = [
     "ObsidianReader",
     "GithubRepositoryReader",
     "MboxReader",
+    "ElasticsearchReader",
+    "SteamshipFileReader",
+    "ChatGPTRetrievalPluginReader",
 ]

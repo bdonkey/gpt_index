@@ -3,11 +3,13 @@
 from gpt_index.prompts.prompts import (
     KeywordExtractPrompt,
     KnowledgeGraphPrompt,
+    PandasPrompt,
     QueryKeywordExtractPrompt,
     QuestionAnswerPrompt,
     RefinePrompt,
     RefineTableContextPrompt,
     SchemaExtractPrompt,
+    SimpleInputPrompt,
     SummaryPrompt,
     TableContextPrompt,
     TextToSQLPrompt,
@@ -88,7 +90,7 @@ DEFAULT_QUERY_PROMPT_MULTIPLE = TreeSelectMultiplePrompt(
 DEFAULT_REFINE_PROMPT_TMPL = (
     "The original question is as follows: {query_str}\n"
     "We have provided an existing answer: {existing_answer}\n"
-    "We have the opportunity to refine the existing answer"
+    "We have the opportunity to refine the existing answer "
     "(only if needed) with some more context below.\n"
     "------------\n"
     "{context_msg}\n"
@@ -169,20 +171,31 @@ DEFAULT_SCHEMA_EXTRACT_PROMPT = SchemaExtractPrompt(DEFAULT_SCHEMA_EXTRACT_TMPL)
 # NOTE: taken from langchain and adapted
 # https://tinyurl.com/b772sd77
 DEFAULT_TEXT_TO_SQL_TMPL = (
-    "Given an input question, first create a syntactically correct SQL query "
-    "to run, then look at the results of the query and return the answer.\n"
+    "Given an input question, first create a syntactically correct {dialect} "
+    "query to run, then look at the results of the query and return the answer. "
+    "You can order the results by a relevant column to return the most "
+    "interesting examples in the database.\n"
+    "Never query for all the columns from a specific table, only ask for a the "
+    "few relevant columns given the question.\n"
+    "Pay attention to use only the column names that you can see in the schema "
+    "description. "
+    "Be careful to not query for columns that do not exist. "
+    "Pay attention to which column is in which table. "
+    "Also, qualify column names with the table name when needed.\n"
     "Use the following format:\n"
-    'Question: "Question here"\n'
-    'SQLQuery: "SQL Query to run"\n'
-    "The following is a schema of the table:\n"
-    "---------------------\n"
+    "Question: Question here\n"
+    "SQLQuery: SQL Query to run\n"
+    "SQLResult: Result of the SQLQuery\n"
+    "Answer: Final answer here\n"
+    "Only use the tables listed below.\n"
     "{schema}\n"
-    "---------------------\n"
     "Question: {query_str}\n"
     "SQLQuery: "
 )
 
-DEFAULT_TEXT_TO_SQL_PROMPT = TextToSQLPrompt(DEFAULT_TEXT_TO_SQL_TMPL)
+DEFAULT_TEXT_TO_SQL_PROMPT = TextToSQLPrompt(
+    DEFAULT_TEXT_TO_SQL_TMPL, stop_token="\nSQLResult:"
+)
 
 
 # NOTE: by partially filling schema, we can reduce to a QuestionAnswer prompt
@@ -258,6 +271,10 @@ DEFAULT_KG_TRIPLET_EXTRACT_PROMPT = KnowledgeGraphPrompt(
     DEFAULT_KG_TRIPLET_EXTRACT_TMPL
 )
 
+############################################
+# HYDE
+##############################################
+
 HYDE_TMPL = (
     "Please write a passage to answer the question\n"
     "Try to include as many key details as possible.\n"
@@ -270,3 +287,30 @@ HYDE_TMPL = (
 )
 
 DEFAULT_HYDE_PROMPT = SummaryPrompt(HYDE_TMPL)
+
+
+############################################
+# Simple Input
+############################################
+
+DEFAULT_SIMPLE_INPUT_TMPL = "{query_str}"
+DEFAULT_SIMPLE_INPUT_PROMPT = SimpleInputPrompt(DEFAULT_SIMPLE_INPUT_TMPL)
+
+
+############################################
+# Pandas
+############################################
+
+DEFAULT_PANDAS_TMPL = (
+    "You are working with a pandas dataframe in Python.\n"
+    "The name of the dataframe is `df`.\n"
+    "This is the result of `print(df.head())`:\n"
+    "{df_str}\n\n"
+    "Here is the input query: {query_str}.\n"
+    "Given the df information and the input query, please follow "
+    "these instructions:\n"
+    "{instruction_str}"
+    "Output:\n"
+)
+
+DEFAULT_PANDAS_PROMPT = PandasPrompt(DEFAULT_PANDAS_TMPL)

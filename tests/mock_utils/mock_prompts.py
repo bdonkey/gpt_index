@@ -3,10 +3,12 @@
 from gpt_index.prompts.prompts import (
     KeywordExtractPrompt,
     KnowledgeGraphPrompt,
+    PandasPrompt,
     QueryKeywordExtractPrompt,
     QuestionAnswerPrompt,
     RefinePrompt,
     SchemaExtractPrompt,
+    SimpleInputPrompt,
     SummaryPrompt,
     TableContextPrompt,
     TextToSQLPrompt,
@@ -46,7 +48,7 @@ MOCK_QUERY_KEYWORD_EXTRACT_PROMPT = QueryKeywordExtractPrompt(
 MOCK_SCHEMA_EXTRACT_PROMPT_TMPL = "{text}\n{schema}"
 MOCK_SCHEMA_EXTRACT_PROMPT = SchemaExtractPrompt(MOCK_SCHEMA_EXTRACT_PROMPT_TMPL)
 
-MOCK_TEXT_TO_SQL_PROMPT_TMPL = "{schema}\n{query_str}"
+MOCK_TEXT_TO_SQL_PROMPT_TMPL = "{dialect}\n{schema}\n{query_str}"
 MOCK_TEXT_TO_SQL_PROMPT = TextToSQLPrompt(MOCK_TEXT_TO_SQL_PROMPT_TMPL)
 
 
@@ -57,3 +59,9 @@ MOCK_KG_TRIPLET_EXTRACT_PROMPT_TMPL = "{max_knowledge_triplets}\n{text}"
 MOCK_KG_TRIPLET_EXTRACT_PROMPT = KnowledgeGraphPrompt(
     MOCK_KG_TRIPLET_EXTRACT_PROMPT_TMPL
 )
+
+MOCK_INPUT_PROMPT_TMPL = "{query_str}"
+MOCK_INPUT_PROMPT = SimpleInputPrompt(MOCK_INPUT_PROMPT_TMPL)
+
+MOCK_PANDAS_PROMPT_TMPL = "{query_str}\n{df_str}\n{instruction_str}"
+MOCK_PANDAS_PROMPT = PandasPrompt(MOCK_PANDAS_PROMPT_TMPL)

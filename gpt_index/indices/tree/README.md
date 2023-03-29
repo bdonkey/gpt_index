@@ -25,11 +25,11 @@ from gpt_index import GPTTreeIndex, SimpleDirectoryReader
 
 # build index
 documents = SimpleDirectoryReader('data').load_data()
-index = GPTTreeIndex(documents)
+index = GPTTreeIndex.from_documents(documents)
 # save index
 index.save_to_disk('index_tree.json')
 # load index from disk
-index = GPTListIndex.load_from_disk('index_tree.json')
+index = GPTTreeIndex.load_from_disk('index_tree.json')
 # query
 response = index.query("<question text>", mode="default")
 ```

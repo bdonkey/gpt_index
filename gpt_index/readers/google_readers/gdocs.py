@@ -9,6 +9,7 @@ from gpt_index.readers.schema.base import Document
 
 SCOPES = ["https://www.googleapis.com/auth/documents.readonly"]
 
+logger = logging.getLogger(__name__)
 
 # Copyright 2019 Google LLC
 #
@@ -39,7 +40,7 @@ class GoogleDocsReader(BaseReader):
             import google_auth_oauthlib  # noqa: F401
             import googleapiclient  # noqa: F401
         except ImportError:
-            raise ValueError(
+            raise ImportError(
                 "`google_auth_oauthlib`, `googleapiclient` and `google` "
                 "must be installed to use the GoogleDocsReader.\n"
                 "Please run `pip install --upgrade google-api-python-client "
@@ -152,6 +153,6 @@ class GoogleDocsReader(BaseReader):
 
 if __name__ == "__main__":
     reader = GoogleDocsReader()
-    logging.info(
+    logger.info(
         reader.load_data(document_ids=["11ctUj_tEf5S8vs_dk8_BNi-Zk8wW5YFhXkKqtmU_4B8"])
     )

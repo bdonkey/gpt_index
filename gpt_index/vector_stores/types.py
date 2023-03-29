@@ -4,7 +4,7 @@
 from dataclasses import dataclass
 from typing import Any, List, Optional, Protocol
 
-from gpt_index.data_structs.data_structs import Node
+from gpt_index.data_structs.node_v2 import Node
 
 
 @dataclass
@@ -37,6 +37,7 @@ class VectorStore(Protocol):
     """Abstract vector store protocol."""
 
     stores_text: bool
+    is_embedding_query: bool = True
 
     @property
     def client(self) -> Any:
@@ -60,7 +61,11 @@ class VectorStore(Protocol):
         ...
 
     def query(
-        self, query_embedding: List[float], similarity_top_k: int
+        self,
+        query_embedding: List[float],
+        similarity_top_k: int,
+        doc_ids: Optional[List[str]] = None,
+        query_str: Optional[str] = None,
     ) -> VectorStoreQueryResult:
         """Query vector store."""
         ...

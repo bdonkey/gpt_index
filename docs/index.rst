@@ -8,13 +8,7 @@ Welcome to LlamaIndex 🦙 (GPT Index)!
 
 LlamaIndex (GPT Index) is a project that provides a central interface to connect your LLM's with external data.
 
-   ⚠️ **NOTE**: We are rebranding GPT Index as LlamaIndex! We will carry out this transition gradually.
-
-   **2/19/2023**: By default, our docs/notebooks/instructions now use the `llama-index` package. However the `gpt-index` package still exists as a duplicate!
-
-   **2/16/2023**: We have a duplicate `llama-index` pip package. Simply replace all imports of `gpt_index` with `llama_index` if you choose to `pip install llama-index`.
-
-- Github: https://github.com/jerryjliu/gpt_index
+- Github: https://github.com/jerryjliu/llama_index
 - PyPi:
    - LlamaIndex: https://pypi.org/project/llama-index/.
    - GPT Index (duplicate): https://pypi.org/project/gpt-index/.
@@ -27,23 +21,27 @@ LlamaIndex (GPT Index) is a project that provides a central interface to connect
 
 Context
 ^^^^^^^
-- LLMs are a phenomenonal piece of technology for knowledge generation and reasoning.
-- A big limitation of LLMs is context size (e.g. Davinci's limit is 4096 tokens. Large, but not infinite).
-- The ability to feed "knowledge" to LLMs is restricted to this limited prompt size and model weights.
+- LLMs are a phenomenonal piece of technology for knowledge generation and reasoning. They are pre-trained on large amounts of publicly available data.
+- How do we best augment LLMs with our own private data?
+- One paradigm that has emerged is *in-context* learning (the other is finetuning), where we insert context into the input prompt. That way, we take advantage of the LLM's reasoning capabilities to generate a response.
+
+To perform LLM's data augmentation in a performant, efficient, and cheap manner, we need to solve two components:
+
+- Data Ingestion
+- Data Indexing
 
 Proposed Solution
 ^^^^^^^^^^^^^^^^^
-That's where the **LlamaIndex** comes in. LlamaIndex is a simple, flexible interface between your external data and LLMs. It resolves the following pain points:
+That's where the **LlamaIndex** comes in. LlamaIndex is a simple, flexible interface between your external data and LLMs. It provides the following tools in an easy-to-use fashion:
 
-- Provides simple data structures to resolve prompt size limitations.
-- Offers data connectors to your external data sources.
+- Offers `data connectors <http://llamahub.ai>`_ to your existing data sources and data formats (API's, PDF's, docs, SQL, etc.)
+- Provides **indices** over your unstructured and structured data for use with LLM's. These indices help to abstract away common boilerplate and pain points for in-context learning:
+
+   - Storing context in an easy-to-access format for prompt insertion.
+   - Dealing with prompt limitations (e.g. 4096 tokens for Davinci) when context is too big.
+   - Dealing with text splitting.
+- Provides users an interface to **query** the index (feed in an input prompt) and obtain a knowledge-augmented output.
 - Offers you a comprehensive toolset trading off cost and performance.
-
-At the core of LlamaIndex is a **data structure**. Instead of relying on world knowledge encoded in the model weights, a GPT Index data structure does the following:
-
-- Uses a pre-trained LLM primarily for *reasoning*/*summarization* instead of prior knowledge.
-- Takes as input a large corpus of text data and build a structured index over it (using an LLM or heuristics).
-- Allow users to *query* the index by passing in an LLM prompt, and obtaining a response.
 
 
 .. toctree::
@@ -55,29 +53,42 @@ At the core of LlamaIndex is a **data structure**. Instead of relying on world k
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Guides
 
-   guides/primer.md 
-   guides/usage_pattern.md
-   guides/use_cases.md
-   guides/index_guide.md
-   guides/sql_guide.md
+   guides/primer.rst
+   guides/tutorials.rst
+   guides/notebooks.rst
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Use Cases
+
+   use_cases/queries.md
+   use_cases/apps.md
 
 
 .. toctree::
    :maxdepth: 1
-   :caption: Technical How To
+   :caption: Key Components
 
    how_to/data_connectors.md
-   how_to/composability.md
-   how_to/update.md
-   how_to/cost_analysis.md
-   how_to/embeddings.md
-   how_to/vector_stores.md
-   how_to/custom_prompts.md
-   how_to/custom_llms.md
-   how_to/using_with_langchain.md
+   how_to/indices.rst
+   how_to/query_interface.rst
+   how_to/customization.rst
+   how_to/analysis.rst
+   how_to/output_parsing.md
+   how_to/integrations.rst
+
+   .. evaluation
+   .. integrations
+
+   .. how_to/composability.md
+   .. how_to/update.md
+   .. how_to/cost_analysis.md
+   .. how_to/vector_stores.md
+   .. how_to/using_with_langchain.md
 
 
 .. toctree::
@@ -89,13 +100,14 @@ At the core of LlamaIndex is a **data structure**. Instead of relying on world k
    reference/composability.rst
    reference/readers.rst
    reference/prompts.rst
-   reference/llm_predictor.rst
-   reference/prompt_helper.rst
-   reference/embeddings.rst
+   reference/service_context.rst
+   reference/optimizers.rst
    reference/struct_store.rst
    reference/response.rst
    reference/playground.rst
+   reference/node_parser.rst
    reference/example_notebooks.rst
+   reference/langchain_integrations/base.rst
 
 
 .. toctree::

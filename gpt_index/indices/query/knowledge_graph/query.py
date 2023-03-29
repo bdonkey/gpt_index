@@ -4,7 +4,8 @@ from collections import defaultdict
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from gpt_index.data_structs.data_structs import KG, Node
+from gpt_index.data_structs.data_structs_v2 import KG
+from gpt_index.data_structs.node_v2 import Node
 from gpt_index.indices.keyword_table.utils import extract_keywords_given_response
 from gpt_index.indices.query.base import BaseGPTIndexQuery
 from gpt_index.indices.query.embedding_utils import (
@@ -17,6 +18,8 @@ from gpt_index.prompts.prompts import QueryKeywordExtractPrompt
 from gpt_index.utils import truncate_text
 
 DQKET = DEFAULT_QUERY_KEYWORD_EXTRACT_TEMPLATE
+
+logger = logging.getLogger(__name__)
 
 
 class KGQueryMode(str, Enum):
@@ -52,10 +55,10 @@ class GPTKGTableQuery(BaseGPTIndexQuery[KG]):
             (see :ref:`Prompt-Templates`).
         max_keywords_per_query (int): Maximum number of keywords to extract from query.
         num_chunks_per_query (int): Maximum number of text chunks to query.
-        include_text (bool): Use the document text source from each relevent triplet
+        include_text (bool): Use the document text source from each relevant triplet
             during queries.
         embedding_mode (KGQueryMode): Specifies whether to use keyowrds,
-            embeddings, or both to find relevent triplets. Should be one of "keyword",
+            embeddings, or both to find relevant triplets. Should be one of "keyword",
             "embedding", or "hybrid".
         similarity_top_k (int): The number of top embeddings to use
             (if embeddings are used).
@@ -83,7 +86,7 @@ class GPTKGTableQuery(BaseGPTIndexQuery[KG]):
 
     def _get_keywords(self, query_str: str) -> List[str]:
         """Extract keywords."""
-        response, _ = self._llm_predictor.predict(
+        response, _ = self._service_context.llm_predictor.predict(
             self.query_keyword_extract_template,
             max_keywords=self.max_keywords_per_query,
             question=query_str,
@@ -102,15 +105,15 @@ class GPTKGTableQuery(BaseGPTIndexQuery[KG]):
                 keywords.append(keyword.strip("(\"'"))
         return keywords
 
-    def _get_nodes_for_response(
+    def _retrieve(
         self,
         query_bundle: QueryBundle,
         similarity_tracker: Optional[SimilarityTracker] = None,
     ) -> List[Node]:
         """Get nodes for response."""
-        logging.info(f"> Starting query: {query_bundle.query_str}")
+        logger.info(f"> Starting query: {query_bundle.query_str}")
         keywords = self._get_keywords(query_bundle.query_str)
-        logging.info(f"> Query keywords: {keywords}")
+        logger.info(f"> Query keywords: {keywords}")
         rel_texts = []
         cur_rel_map = {}
         chunk_indices_count: Dict[str, int] = defaultdict(int)
@@ -128,7 +131,7 @@ class GPTKGTableQuery(BaseGPTIndexQuery[KG]):
             self._embedding_mode != KGQueryMode.KEYWORD
             and len(self.index_struct.embedding_dict) > 0
         ):
-            query_embedding = self._embed_model.get_text_embedding(
+            query_embedding = self._service_context.embed_model.get_text_embedding(
                 query_bundle.query_str
             )
             all_rel_texts = list(self.index_struct.embedding_dict.keys())
@@ -143,10 +146,10 @@ class GPTKGTableQuery(BaseGPTIndexQuery[KG]):
                 embedding_ids=all_rel_texts,
                 similarity_cutoff=self.similarity_cutoff,
             )
-            logging.debug(
+            logger.debug(
                 f"Found the following rel_texts+query similarites: {str(similarities)}"
             )
-            logging.debug(f"Found the following top_k rel_texts: {str(rel_texts)}")
+            logger.debug(f"Found the following top_k rel_texts: {str(rel_texts)}")
             rel_texts.extend(top_rel_texts)
             if self._include_text:
                 keywords = self._extract_rel_text_keywords(top_rel_texts)
@@ -158,7 +161,7 @@ class GPTKGTableQuery(BaseGPTIndexQuery[KG]):
                 for node_id in node_ids:
                     chunk_indices_count[node_id] += 1
         elif len(self.index_struct.embedding_dict) == 0:
-            logging.error(
+            logger.error(
                 "Index was not constructed with embeddings, skipping embedding usage..."
             )
 
@@ -172,16 +175,26 @@ class GPTKGTableQuery(BaseGPTIndexQuery[KG]):
             reverse=True,
         )
         sorted_chunk_indices = sorted_chunk_indices[: self.num_chunks_per_query]
-        sorted_nodes = [
-            self.index_struct.text_chunks[idx] for idx in sorted_chunk_indices
-        ]
+        sorted_nodes = self._docstore.get_nodes(sorted_chunk_indices)
         # filter sorted nodes
-        sorted_nodes = [node for node in sorted_nodes if self._should_use_node(node)]
+        postprocess_info = {"similarity_tracker": similarity_tracker}
+        for node_processor in self.node_preprocessors:
+            sorted_nodes = node_processor.postprocess_nodes(
+                sorted_nodes, postprocess_info
+            )
+
+        # TMP/TODO: also filter rel_texts as nodes until we figure out better
+        # abstraction
+        rel_text_nodes = [Node(text=rel_text) for rel_text in rel_texts]
+        for node_processor in self.node_preprocessors:
+            rel_text_nodes = node_processor.postprocess_nodes(rel_text_nodes)
+        rel_texts = [node.get_text() for node in rel_text_nodes]
+
         for chunk_idx, node in zip(sorted_chunk_indices, sorted_nodes):
             # nodes are found with keyword mapping, give high conf to avoid cutoff
             if similarity_tracker is not None:
                 similarity_tracker.add(node, 1000.0)
-            logging.info(
+            logger.info(
                 f"> Querying with idx: {chunk_idx}: "
                 f"{truncate_text(node.get_text(), 80)}"
             )
@@ -202,7 +215,7 @@ class GPTKGTableQuery(BaseGPTIndexQuery[KG]):
         if similarity_tracker is not None:
             similarity_tracker.add(rel_text_node, 1000.0)
         rel_info_text = "\n".join(rel_info)
-        logging.info(f"> Extracted relationships: {rel_info_text}")
+        logger.info(f"> Extracted relationships: {rel_info_text}")
         sorted_nodes.append(rel_text_node)
 
         return sorted_nodes

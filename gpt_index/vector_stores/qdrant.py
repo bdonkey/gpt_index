@@ -6,13 +6,15 @@ An index that is built on top of an existing Qdrant collection.
 import logging
 from typing import Any, List, Optional, cast
 
-from gpt_index.data_structs.data_structs import Node
+from gpt_index.data_structs.node_v2 import DocumentRelationship, Node
 from gpt_index.utils import get_new_id
 from gpt_index.vector_stores.types import (
     NodeEmbeddingResult,
     VectorStore,
     VectorStoreQueryResult,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class QdrantVectorStore(VectorStore):
@@ -41,7 +43,7 @@ class QdrantVectorStore(VectorStore):
         try:
             import qdrant_client  # noqa: F401
         except ImportError:
-            raise ValueError(import_err_msg)
+            raise ImportError(import_err_msg)
 
         if client is None:
             raise ValueError("client cannot be None.")
@@ -94,7 +96,7 @@ class QdrantVectorStore(VectorStore):
             payload = {
                 "doc_id": result.doc_id,
                 "text": node.get_text(),
-                "index": node.index,
+                "extra_info": node.extra_info,
             }
 
             self._client.upsert(
@@ -161,23 +163,43 @@ class QdrantVectorStore(VectorStore):
         self,
         query_embedding: List[float],
         similarity_top_k: int,
+        doc_ids: Optional[List[str]] = None,
+        query_str: Optional[str] = None,
     ) -> VectorStoreQueryResult:
         """Query index for top k most similar nodes.
 
         Args:
             query_embedding (List[float]): query embedding
             similarity_top_k (int): top k most similar nodes
+            doc_ids (Optional[List[str]]): list of doc_ids to filter by
 
         """
-        from qdrant_client.http.models.models import Payload
+        from qdrant_client.http.models.models import (
+            FieldCondition,
+            Filter,
+            MatchValue,
+            Payload,
+        )
 
         response = self._client.search(
             collection_name=self._collection_name,
             query_vector=query_embedding,
             limit=cast(int, similarity_top_k),
+            query_filter=None
+            if not doc_ids
+            else Filter(
+                must=[
+                    Filter(
+                        should=[
+                            FieldCondition(key="doc_id", match=MatchValue(value=doc_id))
+                            for doc_id in doc_ids
+                        ],
+                    )
+                ]
+            ),
         )
 
-        logging.debug(f"> Top {len(response)} nodes:")
+        logger.debug(f"> Top {len(response)} nodes:")
 
         nodes = []
         similarities = []
@@ -185,8 +207,11 @@ class QdrantVectorStore(VectorStore):
         for point in response:
             payload = cast(Payload, point.payload)
             node = Node(
-                ref_doc_id=payload.get("doc_id"),
                 text=payload.get("text"),
+                extra_info=payload.get("extra_info"),
+                relationships={
+                    DocumentRelationship.SOURCE: payload.get("doc_id", "None"),
+                },
             )
             nodes.append(node)
             similarities.append(point.score)

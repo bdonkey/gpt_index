@@ -90,9 +90,10 @@ def test_build_kg(
     documents: List[Document],
 ) -> None:
     """Test build knowledge graph."""
-    index = GPTKnowledgeGraphIndex(documents)
+    index = GPTKnowledgeGraphIndex.from_documents(documents)
     # NOTE: in these unit tests, document text == triplets
-    table_chunks = {n.text for n in index.index_struct.text_chunks.values()}
+    nodes = index.docstore.get_nodes(list(index.index_struct.node_ids))
+    table_chunks = {n.get_text() for n in nodes}
     assert len(table_chunks) == 3
     assert "(foo, is, bar)" in table_chunks
     assert "(hello, is not, world)" in table_chunks
@@ -132,7 +133,7 @@ def test_build_kg_similarity(
     documents: List[Document],
 ) -> None:
     """Test build knowledge graph."""
-    index = GPTKnowledgeGraphIndex(documents, include_embeddings=True)
+    index = GPTKnowledgeGraphIndex.from_documents(documents, include_embeddings=True)
     # get embedding dict from KG index struct
     rel_text_embeddings = index.index_struct.embedding_dict
 
@@ -156,7 +157,7 @@ def test_query(
     documents: List[Document],
 ) -> None:
     """Test query."""
-    index = GPTKnowledgeGraphIndex(documents)
+    index = GPTKnowledgeGraphIndex.from_documents(documents)
     response = index.query("foo")
     # when include_text is True, the first node is the raw text
     assert str(response) == "foo:(foo, is, bar)"
@@ -165,16 +166,20 @@ def test_query(
         "foo": [("bar", "is")],
     }
 
+    # test keyword filter
+    # NOTE: all nodes will be excluded except triplets (and it will be blank)
+    response = index.query("foo", exclude_keywords=["foo"])
+    assert "foo:The following are knowledge triplets" in str(response)
+
     # test specific query class
     query = GPTKGTableQuery(
         index.index_struct,
-        llm_predictor=index.llm_predictor,
-        prompt_helper=index.prompt_helper,
+        service_context=index.service_context,
         docstore=index.docstore,
         query_keyword_extract_template=MOCK_QUERY_KEYWORD_EXTRACT_PROMPT,
     )
     query_bundle = QueryBundle(query_str="foo", custom_embedding_strs=["foo"])
-    nodes = query._get_nodes_for_response(query_bundle)
+    nodes = query._retrieve(query_bundle)
     assert nodes[0].get_text() == "(foo, is, bar)"
     assert (
         nodes[1].get_text() == "The following are knowledge triplets in the "
@@ -183,14 +188,13 @@ def test_query(
 
     query = GPTKGTableQuery(
         index.index_struct,
-        llm_predictor=index.llm_predictor,
-        prompt_helper=index.prompt_helper,
+        service_context=index.service_context,
         docstore=index.docstore,
         query_keyword_extract_template=MOCK_QUERY_KEYWORD_EXTRACT_PROMPT,
         include_text=False,
     )
     query_bundle = QueryBundle(query_str="foo", custom_embedding_strs=["foo"])
-    nodes = query._get_nodes_for_response(query_bundle)
+    nodes = query._retrieve(query_bundle)
     assert (
         nodes[0].get_text() == "The following are knowledge triplets in the form of "
         "(subset, predicate, object):\n('foo', 'is', 'bar')"
@@ -219,7 +223,7 @@ def test_query_similarity(
     documents: List[Document],
 ) -> None:
     """Test query."""
-    index = GPTKnowledgeGraphIndex(documents, include_embeddings=True)
+    index = GPTKnowledgeGraphIndex.from_documents(documents, include_embeddings=True)
 
     # returns only two rel texts to use for generating response
     # uses hyrbid query by default
@@ -227,8 +231,8 @@ def test_query_similarity(
     assert isinstance(response.extra_info, dict)
     assert len(response.extra_info["kg_rel_texts"]) == 2
 
-    # Filters out all embeddings
+    # Filters embeddings
     try:
-        response = index.query("foo", similarity_cutoff=-1.0)
+        response = index.query("foo", similarity_cutoff=10000000)
     except ValueError as e:
         assert str(e) == "kg_rel_map must be found in at least one Node."

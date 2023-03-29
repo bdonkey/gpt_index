@@ -2,10 +2,12 @@
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from langchain.utilities import RequestsWrapper
+import requests
 
 from gpt_index.readers.base import BaseReader
 from gpt_index.readers.schema.base import Document
+
+logger = logging.getLogger(__name__)
 
 
 class SimpleWebPageReader(BaseReader):
@@ -24,7 +26,7 @@ class SimpleWebPageReader(BaseReader):
         try:
             import html2text  # noqa: F401
         except ImportError:
-            raise ValueError(
+            raise ImportError(
                 "`html2text` package not found, please run `pip install html2text`"
             )
         self._html_to_text = html_to_text
@@ -41,10 +43,9 @@ class SimpleWebPageReader(BaseReader):
         """
         if not isinstance(urls, list):
             raise ValueError("urls must be a list of strings.")
-        requests = RequestsWrapper()
         documents = []
         for url in urls:
-            response = requests.run(url)
+            response = requests.get(url, headers=None).text
             if self._html_to_text:
                 import html2text
 
@@ -73,7 +74,7 @@ class TrafilaturaWebReader(BaseReader):
         try:
             import trafilatura  # noqa: F401
         except ImportError:
-            raise ValueError(
+            raise ImportError(
                 "`trafilatura` package not found, please run `pip install trafilatura`"
             )
 
@@ -147,7 +148,7 @@ class BeautifulSoupWebReader(BaseReader):
             import requests  # noqa: F401
             from bs4 import BeautifulSoup  # noqa: F401
         except ImportError:
-            raise ValueError(
+            raise ImportError(
                 "`bs4`, `requests`, and `urllib` must be installed to scrape websites."
                 "Please run `pip install bs4 requests urllib`."
             )
@@ -215,7 +216,7 @@ class RssReader(BaseReader):
         try:
             import feedparser  # noqa: F401
         except ImportError:
-            raise ValueError(
+            raise ImportError(
                 "`feedparser` package not found, please run `pip install feedparser`"
             )
 
@@ -223,7 +224,7 @@ class RssReader(BaseReader):
             try:
                 import html2text  # noqa: F401
             except ImportError:
-                raise ValueError(
+                raise ImportError(
                     "`html2text` package not found, please run `pip install html2text`"
                 )
         self._html_to_text = html_to_text
@@ -266,4 +267,4 @@ class RssReader(BaseReader):
 
 if __name__ == "__main__":
     reader = SimpleWebPageReader()
-    logging.info(reader.load_data(["http://www.google.com"]))
+    logger.info(reader.load_data(["http://www.google.com"]))

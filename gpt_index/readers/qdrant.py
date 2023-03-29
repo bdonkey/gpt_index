@@ -46,7 +46,7 @@ class QdrantReader(BaseReader):
         try:
             import qdrant_client  # noqa: F401
         except ImportError:
-            raise ValueError(import_err_msg)
+            raise ImportError(import_err_msg)
 
         self._client = qdrant_client.QdrantClient(
             url=host,
@@ -95,6 +95,7 @@ class QdrantReader(BaseReader):
             document = Document(
                 doc_id=payload.get("doc_id"),
                 text=payload.get("text"),
+                extra_info=payload.get("extra_info"),
                 embedding=vector,
             )
             documents.append(document)

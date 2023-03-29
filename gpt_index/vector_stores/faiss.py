@@ -4,7 +4,7 @@ An index that that is built on top of an existing vector store.
 
 """
 
-from typing import Any, List, cast
+from typing import Any, List, Optional, cast
 
 import numpy as np
 
@@ -43,7 +43,7 @@ class FaissVectorStore(VectorStore):
         try:
             import faiss  # noqa: F401
         except ImportError:
-            raise ValueError(import_err_msg)
+            raise ImportError(import_err_msg)
 
         self._faiss_index = cast(faiss.Index, faiss_index)
 
@@ -120,7 +120,11 @@ class FaissVectorStore(VectorStore):
         raise NotImplementedError("Delete not yet implemented for Faiss index.")
 
     def query(
-        self, query_embedding: List[float], similarity_top_k: int
+        self,
+        query_embedding: List[float],
+        similarity_top_k: int,
+        doc_ids: Optional[List[str]] = None,
+        query_str: Optional[str] = None,
     ) -> VectorStoreQueryResult:
         """Query index for top k most similar nodes.
 
@@ -131,7 +135,7 @@ class FaissVectorStore(VectorStore):
         """
         query_embedding_np = np.array(query_embedding, dtype="float32")[np.newaxis, :]
         dists, indices = self._faiss_index.search(query_embedding_np, similarity_top_k)
-        dists = [d[0] for d in dists]
+        dists = [d for d in dists[0]]
         # if empty, then return an empty response
         if len(indices) == 0:
             return VectorStoreQueryResult(similarities=[], ids=[])

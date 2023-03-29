@@ -30,6 +30,11 @@ class IndexStructType(str, Enum):
         CHROMA ("chroma"): Chroma Vector Store Index.
             See :ref:`Ref-Indices-VectorStore`
             for more information on the Chroma vector store index.
+        OPENSEARCH ("opensearch"): Opensearch Vector Store Index.
+            See :ref:`Ref-Indices-VectorStore`
+            for more information on the Opensearch vector store index.
+        CHATGPT_RETRIEVAL_PLUGIN ("chatgpt_retrieval_plugin"): ChatGPT
+            retrieval plugin index.
         SQL ("SQL"): SQL Structured Store Index.
             See :ref:`Ref-Indices-StructStore`
             for more information on the SQL vector store index.
@@ -54,8 +59,16 @@ class IndexStructType(str, Enum):
     QDRANT = "qdrant"
     CHROMA = "chroma"
     VECTOR_STORE = "vector_store"
+    OPENSEARCH = "opensearch"
+    CHATGPT_RETRIEVAL_PLUGIN = "chatgpt_retrieval_plugin"
 
     # for SQL index
     SQL = "sql"
     # for KG index
     KG = "kg"
+
+    # EMPTY
+    EMPTY = "empty"
+    COMPOSITE = "composite"
+
+    PANDAS = "pandas"

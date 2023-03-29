@@ -179,10 +179,10 @@ class SchemaExtractPrompt(Prompt):
 class TextToSQLPrompt(Prompt):
     """Text to SQL prompt.
 
-    Prompt to translate a natural language query into SQL,
-    given a schema `schema`.
+    Prompt to translate a natural language query into SQL in the dialect
+    `dialect` given a schema `schema`.
 
-    Required template variables: `query_str`, `schema`
+    Required template variables: `query_str`, `schema`, `dialect`
 
     Args:
         template (str): Template for the prompt.
@@ -191,7 +191,7 @@ class TextToSQLPrompt(Prompt):
     """
 
     prompt_type: PromptType = PromptType.TEXT_TO_SQL
-    input_variables: List[str] = ["query_str", "schema"]
+    input_variables: List[str] = ["query_str", "schema", "dialect"]
 
 
 class TableContextPrompt(Prompt):
@@ -244,3 +244,33 @@ class KnowledgeGraphPrompt(Prompt):
 
     prompt_type: PromptType = PromptType.KNOWLEDGE_TRIPLET_EXTRACT
     input_variables: List[str] = ["max_knowledge_triplets", "text"]
+
+
+class SimpleInputPrompt(Prompt):
+    """Simple Input prompt.
+
+    Required template variables: `query_str`.
+
+    Args:
+        template (str): Template for the prompt.
+        **prompt_kwargs: Keyword arguments for the prompt.
+
+    """
+
+    prompt_type: PromptType = PromptType.SIMPLE_INPUT
+    input_variables: List[str] = ["query_str"]
+
+
+class PandasPrompt(Prompt):
+    """Pandas prompt. Convert query to python code.
+
+    Required template variables: `query_str`, `df_str`, `instruction_str`.
+
+    Args:
+        template (str): Template for the prompt.
+        **prompt_kwargs: Keyword arguments for the prompt.
+
+    """
+
+    prompt_type: PromptType = PromptType.PANDAS
+    input_variables: List[str] = ["query_str", "df_str", "instruction_str"]

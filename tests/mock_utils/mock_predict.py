@@ -2,6 +2,9 @@
 
 from typing import Any, Dict, Tuple
 
+from gpt_index.indices.query.query_transform.prompts import (
+    DecomposeQueryTransformPrompt,
+)
 from gpt_index.prompts.base import Prompt
 from gpt_index.prompts.prompt_type import PromptType
 from gpt_index.token_counter.utils import mock_extract_keywords_response
@@ -71,6 +74,22 @@ def _mock_kg_triplet_extract(prompt_args: Dict) -> str:
     return prompt_args["text"]
 
 
+def _mock_input(prompt_args: Dict) -> str:
+    """Mock input prompt."""
+    return prompt_args["query_str"]
+
+
+def _mock_decompose_query(prompt_args: Dict) -> str:
+    """Mock decompose query."""
+    return prompt_args["query_str"] + ":" + prompt_args["context_str"]
+
+
+def _mock_pandas(prompt_args: Dict) -> str:
+    """Mock pandas prompt."""
+    query_str = prompt_args["query_str"]
+    return f'df["{query_str}"].iloc[0]'
+
+
 def mock_llmpredictor_predict(prompt: Prompt, **prompt_args: Any) -> Tuple[str, str]:
     """Mock predict method of LLMPredictor.
 
@@ -99,10 +118,26 @@ def mock_llmpredictor_predict(prompt: Prompt, **prompt_args: Any) -> Tuple[str, 
         response = _mock_text_to_sql(full_prompt_args)
     elif prompt.prompt_type == PromptType.KNOWLEDGE_TRIPLET_EXTRACT:
         response = _mock_kg_triplet_extract(full_prompt_args)
+    elif prompt.prompt_type == PromptType.SIMPLE_INPUT:
+        response = _mock_input(full_prompt_args)
+    elif prompt.prompt_type == PromptType.CUSTOM:
+        if isinstance(prompt, DecomposeQueryTransformPrompt):
+            response = _mock_decompose_query(full_prompt_args)
+        else:
+            raise ValueError("Invalid prompt to use with mocks.")
+    elif prompt.prompt_type == PromptType.PANDAS:
+        response = _mock_pandas(full_prompt_args)
     else:
         raise ValueError("Invalid prompt to use with mocks.")
 
     return response, formatted_prompt
+
+
+async def mock_llmpredictor_apredict(
+    prompt: Prompt, **prompt_args: Any
+) -> Tuple[str, str]:
+    """Mock apredict method of LLMPredictor."""
+    return mock_llmpredictor_predict(prompt, **prompt_args)
 
 
 def mock_llmchain_predict(**full_prompt_args: Any) -> str:
