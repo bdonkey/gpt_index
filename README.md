@@ -1,104 +1,182 @@
-# 🗂️ LlamaIndex 🦙 (GPT Index)
+# 🗂️ LlamaIndex 🦙
 
-> ⚠️ **NOTE**: We are rebranding GPT Index as LlamaIndex! We will carry out this transition gradually.
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/llama-index)](https://pypi.org/project/llama-index/)
+[![GitHub contributors](https://img.shields.io/github/contributors/jerryjliu/llama_index)](https://github.com/jerryjliu/llama_index/graphs/contributors)
+[![Discord](https://img.shields.io/discord/1059199217496772688)](https://discord.gg/dGcwcsnxhU)
 
-> **2/25/2023**: By default, our docs/notebooks/instructions now reference "LlamaIndex"
-instead of "GPT Index".
+LlamaIndex (GPT Index) is a data framework for your LLM application. Building with LlamaIndex typically involves working with LlamaIndex core and a chosen set of integrations (or plugins). There are two ways to start building with LlamaIndex in
+Python:
 
-> **2/19/2023**: By default, our docs/notebooks/instructions now use the `llama-index` package. However the `gpt-index` package still exists as a duplicate!
+1. **Starter**: `llama-index` (https://pypi.org/project/llama-index/). A starter Python package that includes core LlamaIndex as well as a selection of integrations.
 
-> **2/16/2023**: We have a duplicate `llama-index` pip package. Simply replace all imports of `gpt_index` with `llama_index` if you choose to `pip install llama-index`.
+2. **Customized**: `llama-index-core` (https://pypi.org/project/llama-index-core/). Install core LlamaIndex and add your chosen LlamaIndex integration packages ([temporary registry](https://pretty-sodium-5e0.notion.site/ce81b247649a44e4b6b35dfb24af28a6?v=53b3c2ced7bb4c9996b81b83c9f01139))
+   that are required for your application. There are over 300 LlamaIndex integration
+   packages that work seamlessly with core, allowing you to build with your preferred
+   LLM, embedding, and vector store providers.
 
-LlamaIndex (GPT Index) is a project that provides a central interface to connect your LLM's with external data.
+The LlamaIndex Python library is namespaced such that import statements which
+include `core` imply that the core package is being used. In contrast, those
+statements without `core` imply that an integration package is being used.
 
-PyPi: 
-- LlamaIndex: https://pypi.org/project/llama-index/.
-- GPT Index (duplicate): https://pypi.org/project/gpt-index/.
+```python
+# typical pattern
+from llama_index.core.xxx import ClassABC  # core submodule xxx
+from llama_index.xxx.yyy import (
+    SubclassABC,
+)  # integration yyy for submodule xxx
 
-Documentation: https://gpt-index.readthedocs.io/en/latest/.
+# concrete example
+from llama_index.core.llms import LLM
+from llama_index.llms.openai import OpenAI
+```
 
-Twitter: https://twitter.com/gpt_index.
+### Important Links
+
+LlamaIndex.TS (Typescript/Javascript): https://github.com/run-llama/LlamaIndexTS.
+
+Documentation: https://docs.llamaindex.ai/en/stable/.
+
+Twitter: https://twitter.com/llama_index.
 
 Discord: https://discord.gg/dGcwcsnxhU.
 
-LlamaHub (community library of data loaders): https://llamahub.ai
+### Ecosystem
+
+- LlamaHub (community library of data loaders): https://llamahub.ai.
+- LlamaLab (cutting-edge AGI projects using LlamaIndex): https://github.com/run-llama/llama-lab.
 
 ## 🚀 Overview
 
 **NOTE**: This README is not updated as frequently as the documentation. Please check out the documentation above for the latest updates!
 
 ### Context
-- LLMs are a phenomenonal piece of technology for knowledge generation and reasoning. They are pre-trained on large amounts of publicly available data.
-- How do we best augment LLMs with our own private data?
-- One paradigm that has emerged is *in-context* learning (the other is finetuning), where we insert context into the input prompt. That way,
-we take advantage of the LLM's reasoning capabilities to generate a response.
 
-To perform LLM's data augmentation in a performant, efficient, and cheap manner, we need to solve two components:
-- Data Ingestion
-- Data Indexing
+- LLMs are a phenomenal piece of technology for knowledge generation and reasoning. They are pre-trained on large amounts of publicly available data.
+- How do we best augment LLMs with our own private data?
+
+We need a comprehensive toolkit to help perform this data augmentation for LLMs.
 
 ### Proposed Solution
 
-That's where the **LlamaIndex** comes in. LlamaIndex is a simple, flexible interface between your external data and LLMs. It provides the following tools in an easy-to-use fashion:
+That's where **LlamaIndex** comes in. LlamaIndex is a "data framework" to help you build LLM apps. It provides the following tools:
 
-- Offers **data connectors** to your existing data sources and data formats (API's, PDF's, docs, SQL, etc.)
-- Provides **indices** over your unstructured and structured data for use with LLM's. 
-These indices help to abstract away common boilerplate and pain points for in-context learning:
-   - Storing context in an easy-to-access format for prompt insertion.
-   - Dealing with prompt limitations (e.g. 4096 tokens for Davinci) when context is too big.
-   - Dealing with text splitting.
-- Provides users an interface to **query** the index (feed in an input prompt) and obtain a knowledge-augmented output.
-- Offers you a comprehensive toolset trading off cost and performance.
+- Offers **data connectors** to ingest your existing data sources and data formats (APIs, PDFs, docs, SQL, etc.).
+- Provides ways to **structure your data** (indices, graphs) so that this data can be easily used with LLMs.
+- Provides an **advanced retrieval/query interface over your data**: Feed in any LLM input prompt, get back retrieved context and knowledge-augmented output.
+- Allows easy integrations with your outer application framework (e.g. with LangChain, Flask, Docker, ChatGPT, anything else).
 
+LlamaIndex provides tools for both beginner users and advanced users. Our high-level API allows beginner users to use LlamaIndex to ingest and query their data in
+5 lines of code. Our lower-level APIs allow advanced users to customize and extend any module (data connectors, indices, retrievers, query engines, reranking modules),
+to fit their needs.
 
 ## 💡 Contributing
 
-Interesting in contributing? See our [Contribution Guide](CONTRIBUTING.md) for more details.
+Interested in contributing? Contributions to LlamaIndex core as well as contributing
+integrations that build on the core are both accepted and highly encouraged! See our [Contribution Guide](CONTRIBUTING.md) for more details.
 
 ## 📄 Documentation
 
-Full documentation can be found here: https://gpt-index.readthedocs.io/en/latest/. 
+Full documentation can be found here: https://docs.llamaindex.ai/en/latest/.
 
-Please check it out for the most up-to-date tutorials, how-to guides, references, and other resources! 
-
+Please check it out for the most up-to-date tutorials, how-to guides, references, and other resources!
 
 ## 💻 Example Usage
 
-```
-pip install llama-index
+```sh
+# custom selection of integrations to work with core
+pip install llama-index-core
+pip install llama-index-llms-openai
+pip install llama-index-llms-replicate
+pip install llama-index-embeddings-huggingface
 ```
 
-Examples are in the `examples` folder. Indices are in the `indices` folder (see list of indices below).
+Examples are in the `docs/examples` folder. Indices are in the `indices` folder (see list of indices below).
 
-To build a simple vector store index:
+To build a simple vector store index using OpenAI:
+
 ```python
 import os
-os.environ["OPENAI_API_KEY"] = 'YOUR_OPENAI_API_KEY'
 
-from llama_index import GPTSimpleVectorIndex, SimpleDirectoryReader
-documents = SimpleDirectoryReader('data').load_data()
-index = GPTSimpleVectorIndex.from_documents(documents)
+os.environ["OPENAI_API_KEY"] = "YOUR_OPENAI_API_KEY"
+
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+
+documents = SimpleDirectoryReader("YOUR_DATA_DIRECTORY").load_data()
+index = VectorStoreIndex.from_documents(documents)
 ```
 
-To save to and load from disk:
+To build a simple vector store index using non-OpenAI LLMs, e.g. Llama 2 hosted on [Replicate](https://replicate.com/), where you can easily create a free trial API token:
+
 ```python
-# save to disk
-index.save_to_disk('index.json')
-# load from disk
-index = GPTSimpleVectorIndex.load_from_disk('index.json')
+import os
+
+os.environ["REPLICATE_API_TOKEN"] = "YOUR_REPLICATE_API_TOKEN"
+
+from llama_index.core import Settings, VectorStoreIndex, SimpleDirectoryReader
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.llms.replicate import Replicate
+from transformers import AutoTokenizer
+
+# set the LLM
+llama2_7b_chat = "meta/llama-2-7b-chat:8e6975e5ed6174911a6ff3d60540dfd4844201974602551e10e9e87ab143d81e"
+Settings.llm = Replicate(
+    model=llama2_7b_chat,
+    temperature=0.01,
+    additional_kwargs={"top_p": 1, "max_new_tokens": 300},
+)
+
+# set tokenizer to match LLM
+Settings.tokenizer = AutoTokenizer.from_pretrained(
+    "NousResearch/Llama-2-7b-chat-hf"
+)
+
+# set the embed model
+Settings.embed_model = HuggingFaceEmbedding(
+    model_name="BAAI/bge-small-en-v1.5"
+)
+
+documents = SimpleDirectoryReader("YOUR_DATA_DIRECTORY").load_data()
+index = VectorStoreIndex.from_documents(
+    documents,
+)
 ```
 
 To query:
+
 ```python
-index.query("<question_text>?")
+query_engine = index.as_query_engine()
+query_engine.query("YOUR_QUESTION")
+```
+
+By default, data is stored in-memory.
+To persist to disk (under `./storage`):
+
+```python
+index.storage_context.persist()
+```
+
+To reload from disk:
+
+```python
+from llama_index.core import StorageContext, load_index_from_storage
+
+# rebuild storage context
+storage_context = StorageContext.from_defaults(persist_dir="./storage")
+# load index
+index = load_index_from_storage(storage_context)
 ```
 
 ## 🔧 Dependencies
 
-The main third-party package requirements are `tiktoken`, `openai`, and `langchain`.
+We use poetry as the package manager for all Python packages. As a result, the
+dependencies of each Python package can be found by referencing the `pyproject.toml`
+file in each of the package's folders.
 
-All requirements should be contained within the `setup.py` file. To run the package locally without building the wheel, simply run `pip install -r requirements.txt`. 
-
+```bash
+cd <desired-package-folder>
+pip install poetry
+poetry install --with dev
+```
 
 ## 📖 Citation
 
@@ -110,7 +188,7 @@ author = {Liu, Jerry},
 doi = {10.5281/zenodo.1234},
 month = {11},
 title = {{LlamaIndex}},
-url = {https://github.com/jerryjliu/gpt_index},
+url = {https://github.com/jerryjliu/llama_index},
 year = {2022}
 }
 ```
