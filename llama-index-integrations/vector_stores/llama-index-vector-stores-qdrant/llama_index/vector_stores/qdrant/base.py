@@ -74,6 +74,20 @@ class QdrantVectorStore(BasePydanticVectorStore):
         sparse_doc_fn (Optional[SparseEncoderCallable]): function to encode sparse vectors
         sparse_query_fn (Optional[SparseEncoderCallable]): function to encode sparse queries
         hybrid_fusion_fn (Optional[HybridFusionCallable]): function to fuse hybrid search results
+
+    Examples:
+        `pip install llama-index-vector-stores-qdrant`
+
+        ```python
+        import qdrant_client
+        from llama_index.vector_stores.qdrant import QdrantVectorStore
+
+        client = qdrant_client.QdrantClient()
+
+        vector_store = QdrantVectorStore(
+            collection_name="example_collection", client=client
+        )
+        ```
     """
 
     stores_text: bool = True
@@ -820,6 +834,15 @@ class QdrantVectorStore(BasePydanticVectorStore):
                     FieldCondition(
                         key=subfilter.key,
                         match=MatchExcept(**{"except": [subfilter.value]}),
+                    )
+                )
+            elif subfilter.operator == "in":
+                # match any of the values
+                # https://qdrant.tech/documentation/concepts/filtering/#match-any
+                must_conditions.append(
+                    FieldCondition(
+                        key=subfilter.key,
+                        match=MatchAny(any=str(subfilter.value).split(",")),
                     )
                 )
 
